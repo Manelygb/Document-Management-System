@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import {useDispatch} from "react-redux";
+import { AppDispatch } from "../../store/store";
+import { authActions } from "../../store/slices/auth.slice";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "../../icons";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
@@ -9,6 +12,27 @@ import Button from "../ui/button/Button";
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  const dispatch = useDispatch<AppDispatch>();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false); 
+
+  const onSubmit = async () => {
+
+    console.log("Attempting login with :", {email, password});
+
+    try {
+      await dispatch(authActions.login({ email, password })).unwrap();
+    } catch (error) {
+      console.error("Login failed:", error);
+      alert("Failure");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
   return (
     <div className="flex flex-col flex-1">
       <div className="w-full max-w-md pt-10 mx-auto">
@@ -89,7 +113,10 @@ export default function SignInForm() {
                   <Label>
                     Email <span className="text-error-500">*</span>{" "}
                   </Label>
-                  <Input placeholder="info@gmail.com" />
+                  <Input 
+                  placeholder="info@gmail.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)} />
                 </div>
                 <div>
                   <Label>
@@ -99,6 +126,8 @@ export default function SignInForm() {
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) =>setPassword(e.target.value)}
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -127,8 +156,8 @@ export default function SignInForm() {
                   </Link>
                 </div>
                 <div>
-                  <Button className="w-full" size="sm">
-                    Sign in
+                  <Button className="w-full" size="sm" onClick={onSubmit} disabled={loading}>
+                    {loading ? "Signing in..." : "Sign in"}
                   </Button>
                 </div>
               </div>

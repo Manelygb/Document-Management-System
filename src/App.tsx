@@ -18,16 +18,28 @@ import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
+import { useNavigate, useLocation } from 'react-router-dom';
+import { history } from './utils';
+import UsersDashboard from "./pages/UserMangement/userManagement";
+import DocumentsDashboard from "./pages/DocumentManagement/documentManagement";
+import DocumentDetails from "./pages/DocumentManagement/docDetails";
 
+function HistorySetter() {
+  history.navigate = useNavigate();
+  history.location = useLocation();
+  return null; // This component doesn't render anything, it just sets values
+}
 export default function App() {
+  
   return (
     <>
       <Router>
+      <HistorySetter />
         <ScrollToTop />
         <Routes>
           {/* Dashboard Layout */}
           <Route element={<AppLayout />}>
-            <Route index path="/" element={<Home />} />
+            <Route index path="/home" element={<Home />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
@@ -39,6 +51,9 @@ export default function App() {
 
             {/* Tables */}
             <Route path="/basic-tables" element={<BasicTables />} />
+            <Route path= "/users-dashboard" element={<UsersDashboard/>} />
+            <Route path = "/doc-dashboard" element={<DocumentsDashboard/>} />
+            <Route path= '/doc-details' element= {<DocumentDetails/>} />
 
             {/* Ui Elements */}
             <Route path="/alerts" element={<Alerts />} />
@@ -54,7 +69,7 @@ export default function App() {
           </Route>
 
           {/* Auth Layout */}
-          <Route path="/signin" element={<SignIn />} />
+          <Route path="/" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
 
           {/* Fallback Route */}

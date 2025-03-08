@@ -28,9 +28,15 @@ type NavItem = {
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
-    name: "Dashboard",
-    subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+    name: "Users Dashboard",
+    path: "/users-dashboard",
   },
+  { 
+    icon: <PageIcon />,
+    name: "Documents",
+    path : "/doc-dashboard",
+  }
+  /*
   {
     icon: <CalenderIcon />,
     name: "Calendar",
@@ -58,10 +64,11 @@ const navItems: NavItem[] = [
       { name: "Blank Page", path: "/blank", pro: false },
       { name: "404 Error", path: "/error-404", pro: false },
     ],
-  },
+  },*/
 ];
 
 const othersItems: NavItem[] = [
+  /*
   {
     icon: <PieChartIcon />,
     name: "Charts",
@@ -81,12 +88,12 @@ const othersItems: NavItem[] = [
       { name: "Images", path: "/images", pro: false },
       { name: "Videos", path: "/videos", pro: false },
     ],
-  },
+  },*/
   {
     icon: <PlugInIcon />,
     name: "Authentication",
     subItems: [
-      { name: "Sign In", path: "/signin", pro: false },
+      { name: "Sign In", path: "/", pro: false },
       { name: "Sign Up", path: "/signup", pro: false },
     ],
   },
@@ -303,6 +310,7 @@ const AppSidebar: React.FC = () => {
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
         }`}
       >
+        {/*
         <Link to="/">
           {isExpanded || isHovered || isMobileOpen ? (
             <>
@@ -329,7 +337,7 @@ const AppSidebar: React.FC = () => {
               height={32}
             />
           )}
-        </Link>
+        </Link> */}
       </div>
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="mb-6">
@@ -342,11 +350,11 @@ const AppSidebar: React.FC = () => {
                     : "justify-start"
                 }`}
               >
-                {isExpanded || isHovered || isMobileOpen ? (
+                {/*isExpanded || isHovered || isMobileOpen ? (
                   "Menu"
                 ) : (
                   <HorizontaLDots className="size-6" />
-                )}
+                )*/}
               </h2>
               {renderMenuItems(navItems, "main")}
             </div>
@@ -358,17 +366,17 @@ const AppSidebar: React.FC = () => {
                     : "justify-start"
                 }`}
               >
-                {isExpanded || isHovered || isMobileOpen ? (
+                {/*isExpanded || isHovered || isMobileOpen ? (
                   "Others"
                 ) : (
                   <HorizontaLDots />
-                )}
+                )*/}
               </h2>
               {renderMenuItems(othersItems, "others")}
             </div>
           </div>
         </nav>
-        {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
+      
       </div>
     </aside>
   );

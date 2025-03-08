@@ -1,4 +1,6 @@
 import { ReactNode } from "react";
+import Checkbox from "../../form/input/Checkbox";
+
 
 // Props for Table
 interface TableProps {
@@ -8,7 +10,9 @@ interface TableProps {
 
 // Props for TableHeader
 interface TableHeaderProps {
-  children: ReactNode; // Header row(s)
+  children: ReactNode;
+  onSelectAll : (checked : boolean) => void;
+  isAllSelected : boolean;
   className?: string; // Optional className for styling
 }
 
@@ -20,8 +24,12 @@ interface TableBodyProps {
 
 // Props for TableRow
 interface TableRowProps {
-  children: ReactNode; // Cells (th or td)
+  isHeader?: boolean; 
+  children: ReactNode;
+  isSelected? : boolean;
+  onSelect? : (checked : boolean) => void;// Cells (th or td)
   className?: string; // Optional className for styling
+  onClick?: (event: React.MouseEvent<HTMLTableRowElement>) => void;
 }
 
 // Props for TableCell
@@ -33,12 +41,23 @@ interface TableCellProps {
 
 // Table Component
 const Table: React.FC<TableProps> = ({ children, className }) => {
-  return <table className={`min-w-full  ${className}`}>{children}</table>;
+  return <table className={`min-w-full table-auto ${className}`}>{children}</table>;
 };
 
 // TableHeader Component
-const TableHeader: React.FC<TableHeaderProps> = ({ children, className }) => {
-  return <thead className={className}>{children}</thead>;
+const TableHeader: React.FC<TableHeaderProps> = ({ children,onSelectAll, isAllSelected, className }) => {
+  return (
+    <thead className={className}>
+      <tr className="w-full"> {/* Ensure proper table width */}
+        <th className="p-2 w-10"> {/* Adjust width to match row checkbox */}
+          <Checkbox checked={isAllSelected} onChange={onSelectAll} />
+        </th>
+        
+        {children}
+        
+      </tr>
+    </thead>
+  );
 };
 
 // TableBody Component
@@ -47,8 +66,17 @@ const TableBody: React.FC<TableBodyProps> = ({ children, className }) => {
 };
 
 // TableRow Component
-const TableRow: React.FC<TableRowProps> = ({ children, className }) => {
-  return <tr className={className}>{children}</tr>;
+const TableRow: React.FC<TableRowProps> = ({ isHeader,children, isSelected, onSelect, className, onClick }) => {
+  return (
+    <tr className={`w-full table-fixed ${className}`} onClick={onClick}>
+      {!isHeader && onSelect && (
+        <td className="p-2 w-10"> {/* Keep width consistent */}
+          <Checkbox checked={isSelected} onChange={onSelect} />
+        </td>
+      )}
+      {children}
+    </tr>
+  );
 };
 
 // TableCell Component
