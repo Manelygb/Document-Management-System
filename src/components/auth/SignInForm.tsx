@@ -18,6 +18,7 @@ export default function SignInForm() {
   const [loading, setLoading] = useState(false); 
 
   const onSubmit = async () => {
+    event.preventDefault();
 
     console.log("Attempting login with :", {email, password});
 

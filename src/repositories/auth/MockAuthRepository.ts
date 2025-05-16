@@ -1,35 +1,27 @@
-import IAuthRepository, { LoginPayload, SignUpPayload, User } from "./IAuthRepository";
+import IAuthRepository, { LoginPayload, User } from "./IAuthRepository";
+import { debugLog } from "./utils";
 
 class MockAuthRepository implements IAuthRepository {
     private user: User | null = null;
+    private authToken: string | null = null;
 
-    async login({ email, password }: LoginPayload): Promise<{ success: boolean; user?: User; message?: string }> {
-        console.log("Mock Login...");
+    async login({ email, password }: LoginPayload): Promise<{ success: boolean; user?: User; message?: string; token?: string }> {
+        debugLog("MockAuth", "Attempting login...");
 
         if (email === "admin@gmail.com" && password === "password123") {
-            this.user = { email }; // No username, only email
-            return { success: true, user: this.user };
+            this.authToken = "mock-jwt-token-" + Math.random().toString(36).substring(2);
+            this.user = { email, username: email.split('@')[0] };
+            
+            debugLog("MockAuth", { 
+                message: 'Login successful', 
+                token: `${this.authToken.substring(0, 15)}...` 
+            });
+            
+            return { success: true, user: this.user, token: this.authToken };
         }
-        console.log('here');
+        
+        debugLog("MockAuth", { message: "Invalid credentials" });
         return { success: false, message: "Invalid credentials" };
-        
-    }
-
-    async signup({ firstName, lastName, email, password }: SignUpPayload): Promise<{ success: boolean; user?: User; message?: string }> {
-        console.log("Mock Sign-Up...");
-        
-        // Simulate a simple email check
-        if (email === "existing@gmail.com") {
-            return { success: false, message: "Email already in use" };
-        }
-
-        this.user = { firstName, lastName, email };
-        return { success: true, user: this.user };
-    }
-
-    async logout(): Promise<void> {
-        this.user = null;
-        console.log("User logged out");
     }
 
     getCurrentUser(): User | null {
