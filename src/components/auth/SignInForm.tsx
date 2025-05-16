@@ -17,7 +17,7 @@ export default function SignInForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false); 
 
-  const onSubmit = async () => {
+  const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     console.log("Attempting login with :", {email, password});
@@ -108,7 +108,7 @@ export default function SignInForm() {
                 </span>
               </div>
             </div>
-            <form>
+            <form onSubmit={onSubmit}>
               <div className="space-y-6">
                 <div>
                   <Label>
@@ -157,7 +157,7 @@ export default function SignInForm() {
                   </Link>
                 </div>
                 <div>
-                  <Button className="w-full" size="sm" onClick={onSubmit} disabled={loading}>
+                  <Button className="w-full" size="sm" disabled={loading}>
                     {loading ? "Signing in..." : "Sign in"}
                   </Button>
                 </div>

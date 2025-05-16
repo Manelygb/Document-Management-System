@@ -4,7 +4,7 @@ import IAuthRepository from "./IAuthRepository";
 import { debugLog } from "./utils";
 
 // Environment configuration - can be changed to "api" or "mock"
-const ENV: string = "api";  // Changed from "mock" to "api"
+const ENV: string = "mock";  // Changed from "mock" to "api"
 
 // API base URL - configure for your environment
 const API_BASE_URL = "http://localhost:8080";

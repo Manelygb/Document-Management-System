@@ -27,7 +27,7 @@ const initialState: UserState = {
 
 export const fetchUsers = createAsyncThunk("users/fetchUsers", async (params: FetchUsersParams, { rejectWithValue }) => {
   try {
-    const response = await UserRepository.fetchUsers(params);
+    const response = await UserRepository.getInstance().fetchUsers(params);
     console.log("working", response);
     return response as FetchUsersResponse;
     

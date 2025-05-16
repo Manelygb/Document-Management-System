@@ -48,14 +48,9 @@ const Table: React.FC<TableProps> = ({ children, className }) => {
 const TableHeader: React.FC<TableHeaderProps> = ({ children,onSelectAll, isAllSelected, className }) => {
   return (
     <thead className={className}>
-      <tr className="w-full"> {/* Ensure proper table width */}
-        <th className="p-2 w-10"> {/* Adjust width to match row checkbox */}
-          <Checkbox checked={isAllSelected} onChange={onSelectAll} />
-        </th>
-        
-        {children}
-        
-      </tr>
+      <tr className="w-full"><th className="p-2 w-10"><Checkbox checked={isAllSelected} onChange={(checked: boolean) => {
+              onSelectAll(checked);
+            }} /></th>{children}</tr>
     </thead>
   );
 };
@@ -71,7 +66,13 @@ const TableRow: React.FC<TableRowProps> = ({ isHeader,children, isSelected, onSe
     <tr className={`w-full table-fixed ${className}`} onClick={onClick}>
       {!isHeader && onSelect && (
         <td className="p-2 w-10"> {/* Keep width consistent */}
-          <Checkbox checked={isSelected} onChange={onSelect} />
+          <Checkbox
+            checked={isSelected}
+            onChange={(checked: boolean, event?: React.ChangeEvent<HTMLInputElement>) => {
+              event?.stopPropagation(); // Prevent row click behavior
+              onSelect(checked);
+            }}
+          />
         </td>
       )}
       {children}

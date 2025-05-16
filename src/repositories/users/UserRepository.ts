@@ -1,6 +1,10 @@
 import axios from "axios";
+import MockUserRepository from "./MockUserRepository";
+import IUserRepository from "./IUserRepository";
+// import APIUserRepository from "./APIUserRepository"; // Future Implementation
 
 const API_BASE_URL = "http://localhost:5000/api/users";
+const ENV: string = "mock";
 
 export interface User {
     id: number;
@@ -32,25 +36,20 @@ export interface FetchUsersResponse {
     };
   }
 
-export const UserRepository = {
-    fetchUsers: async (params: FetchUsersParams) => {
-      console.log("Sending request with:", params);
-      
-      try {
-        const response = await axios.post(API_BASE_URL, params.filters || [], {
-          params: {
-            page: params.page || 1,
-            per_page: params.per_page || 10,
-            sort_by: params.sort_by || "id",
-            order: params.order || "asc",
-          },
-        });
-        console.log("Response received:", response.data);
-        return response.data;
-      } catch (error: any) {
-        console.error("API request failed:", error.message);
-        throw error;
-      }
-    },
-  };
-  
+class UserRepository {
+    private static instance: IUserRepository;
+
+    static getInstance(): IUserRepository {
+        if (!UserRepository.instance) {
+            if (ENV === "api") {
+                // UserRepository.instance = new APIUserRepository(); // Future Implementation
+            } else {
+                UserRepository.instance = new MockUserRepository();
+            }
+        }
+        console.log("Returning an instance of UserRepository...");
+        return UserRepository.instance;
+    }
+}
+
+export { UserRepository };
