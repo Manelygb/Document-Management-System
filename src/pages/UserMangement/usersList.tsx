@@ -11,7 +11,7 @@
   
   import { operations } from "./filterData";
   
-  export default function UserList() {
+  export default function UsersList() {
     const dispatch = useDispatch<AppDispatch>();
     const { users, loading, error, pagination } = useSelector((state: RootState) => state.users);
     

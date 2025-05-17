@@ -35,13 +35,13 @@ const navItems: NavItem[] = [
     icon: <PageIcon />,
     name: "Documents",
     path : "/doc-dashboard",
-  }
-  /*
-  {
-    icon: <CalenderIcon />,
-    name: "Calendar",
-    path: "/calendar",
   },
+  {
+    icon: <ListIcon />,
+    name: "Departments",
+    path: "/create-department",
+  },
+  /*
   {
     icon: <UserCircleIcon />,
     name: "User Profile",

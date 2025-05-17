@@ -23,14 +23,22 @@ import { history } from './utils';
 import UsersDashboard from "./pages/UserMangement/userManagement";
 import DocumentsDashboard from "./pages/DocumentManagement/documentManagement";
 import DocumentDetails from "./pages/DocumentManagement/docDetails";
+import CreateUser from "./pages/UserMangement/CreateUser";
+import CreateDepartment from "./pages/DepartmentManagement/CreateDepartment";
+import CreateCategory from "./pages/DocumentManagement/CreateCategory";
+import CreateDocument from "./pages/DocumentManagement/CreateDocument";
+
+// Import department management components
+import DepartmentDashboard from './pages/DepartmentManagement/DepartmentDashboard';
+import DepartmentUsers from './pages/DepartmentManagement/DepartmentUsers';
 
 function HistorySetter() {
   history.navigate = useNavigate();
   history.location = useLocation();
   return null; // This component doesn't render anything, it just sets values
 }
+
 export default function App() {
-  
   return (
     <>
       <Router>
@@ -51,9 +59,15 @@ export default function App() {
 
             {/* Tables */}
             <Route path="/basic-tables" element={<BasicTables />} />
-            <Route path= "/users-dashboard" element={<UsersDashboard/>} />
-            <Route path = "/doc-dashboard" element={<DocumentsDashboard/>} />
-            <Route path= '/doc-details' element= {<DocumentDetails/>} />
+            <Route path="/users-dashboard" element={<UsersDashboard/>} />
+            <Route path="/doc-dashboard" element={<DocumentsDashboard/>} />
+            <Route path="/doc-details" element={<DocumentDetails/>} />
+
+            {/* New Routes */}
+            <Route path="/create-user" element={<CreateUser />} />
+            <Route path="/create-department" element={<CreateDepartment />} />
+            <Route path="/create-category" element={<CreateCategory />} />
+            <Route path="/create-document" element={<CreateDocument />} />
 
             {/* Ui Elements */}
             <Route path="/alerts" element={<Alerts />} />
@@ -66,6 +80,11 @@ export default function App() {
             {/* Charts */}
             <Route path="/line-chart" element={<LineChart />} />
             <Route path="/bar-chart" element={<BarChart />} />
+
+            {/* Department Management Routes */}
+            <Route path="/departments" element={<DepartmentDashboard />} />
+            <Route path="/departments/create" element={<CreateDepartment />} />
+            <Route path="/departments/:departmentId/users" element={<DepartmentUsers />} />
           </Route>
 
           {/* Auth Layout */}
