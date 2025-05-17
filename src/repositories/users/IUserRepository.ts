@@ -1,14 +1,8 @@
 export interface User {
     id: number;
     name: string;
-    position: string;
-    address: string;
-    status: string;
     email: string;
-    phone: string;
     department: string;
-    hire_date: string;
-    employee_id: number;
 }
 
 export interface FetchUsersParams {

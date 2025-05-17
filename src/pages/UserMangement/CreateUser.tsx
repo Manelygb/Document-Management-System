@@ -28,7 +28,7 @@ interface Department {
 
 // Dummy department data to replace API call when mocking
 const dummyDepartments: Department[] = [
-  { id: 1, name: "Engineering" },
+  { id: 1, name: "IT" },
   { id: 2, name: "Marketing" },
   { id: 3, name: "Finance" },
   { id: 4, name: "Human Resources" },
@@ -46,10 +46,10 @@ export default function CreateUser() {
     username: "", // Added username field
     fullName: "", // Added fullName field for concatenation
     role: "USER", // Default role
-    department: "", // Changed to array for selected departments
+    department: [], // Changed to array for selected departments (will store names)
     companyId: 1 // Default company ID
   });
-  const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
+  const [selectedDepartmentNames, setSelectedDepartmentNames] = useState<string[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingDepartments, setLoadingDepartments] = useState(true);
@@ -137,7 +137,7 @@ export default function CreateUser() {
         email: formData.email,
         password: formData.password,
         role: formData.role,
-        department: formData.department.join(","),
+        department: selectedDepartmentNames.join(","), // Join the department names
         companyId: formData.companyId
       };
       
@@ -181,19 +181,26 @@ export default function CreateUser() {
     }
   };
 
-  // Format departments for MultiSelect component
+  // Format departments for MultiSelect component - keeping IDs as values for selection
   const departmentOptions = departments.map((dept) => ({
     value: dept.id.toString(),
     text: dept.name,
   }));
   
-  // Handle department selection
-  const handleDepartmentChange = (selectedValues: string[]) => {
-    setSelectedDepartments(selectedValues);
+  // Handle department selection - convert IDs to department names
+  const handleDepartmentChange = (selectedIds: string[]) => {
+    // Convert selected IDs to department names
+    const selectedNames = selectedIds.map(id => {
+      const department = departments.find(dept => dept.id.toString() === id);
+      return department ? department.name : '';
+    }).filter(name => name !== ''); // Filter out any empty names that might occur
+    
+    setSelectedDepartmentNames(selectedNames);
+    
     // Also update the department field in formData
     setFormData(prev => ({
       ...prev,
-      department: selectedValues
+      department: selectedNames
     }));
   };
 
@@ -286,13 +293,20 @@ export default function CreateUser() {
               {loadingDepartments ? (
                 <div className="text-gray-500 dark:text-gray-400">Loading departments...</div>
               ) : (
-                <MultiSelect
-                  label="Assign to Departments"
-                  options={departmentOptions}
-                  onChange={handleDepartmentChange}
-                  defaultSelected={[]}
-                  closeMenuOnSelect={true}
-                />
+                <>
+                  <MultiSelect
+                    label="Assign to Departments"
+                    options={departmentOptions}
+                    onChange={handleDepartmentChange}
+                    defaultSelected={[]}
+                    closeMenuOnSelect={true}
+                  />
+                  {selectedDepartmentNames.length > 0 && (
+                    <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                      Selected departments: {selectedDepartmentNames.join(", ")}
+                    </div>
+                  )}
+                </>
               )}
             </div>
 

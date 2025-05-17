@@ -4,14 +4,8 @@ class MockUserRepository implements IUserRepository {
     private users: User[] = Array.from({ length: 50 }, (_, i) => ({
         id: i + 1,
         name: `User ${i + 1}`,
-        position: "Developer",
-        address: "123 Main St",
-        status: "Active",
         email: `user${i + 1}@example.com`,
-        phone: "123-456-7890",
         department: "Engineering",
-        hire_date: "2022-01-01",
-        employee_id: 1000 + i + 1,
     }));
 
     async fetchUsers(params: FetchUsersParams): Promise<FetchUsersResponse> {

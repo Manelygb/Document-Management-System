@@ -1,54 +1,40 @@
 import axios from "axios";
 import MockUserRepository from "./MockUserRepository";
 import IUserRepository from "./IUserRepository";
-// import APIUserRepository from "./APIUserRepository"; // Future Implementation
+import APIUserRepository from "./APIUserRepository";
 
-const API_BASE_URL = "http://localhost:5000/api/users";
-const ENV: string = "mock";
+// Define a consistent API_BASE_URL
+const API_BASE_URL = "http://localhost:8080"; // Match the URL in APIUserRepository
 
-export interface User {
-    id: number;
-    name: string;
-    position: string;
-    address: string;
-    status: string;
-    email: string;
-    phone: string;
-    department: string;
-    hire_date: string;
-    employee_id: number;    
-}
-
-export interface FetchUsersParams {
-    page?: number;
-    per_page?: number;
-    sort_by?: string;
-    order?: "asc" | "desc";
-    filters?: { key: string; op: string; value: string }[]; 
-}
-export interface FetchUsersResponse {
-    data: User[];
-    pagination: {
-      total_records: number;
-      total_pages: number;
-      current_page: number;
-      per_page: number;
-    };
-  }
+// Set to 'mock' for testing or 'api' for real API
+const ENV: string = "api"; // Changed to api to use the real implementation
 
 class UserRepository {
     private static instance: IUserRepository;
-
+    
     static getInstance(): IUserRepository {
         if (!UserRepository.instance) {
             if (ENV === "api") {
-                // UserRepository.instance = new APIUserRepository(); // Future Implementation
+                console.log("Creating API repository instance...");
+                UserRepository.instance = new APIUserRepository();
             } else {
+                console.log("Creating Mock repository instance...");
                 UserRepository.instance = new MockUserRepository();
             }
         }
         console.log("Returning an instance of UserRepository...");
         return UserRepository.instance;
+    }
+    
+    // Helper method to switch implementations for testing
+    static switchToMock(): void {
+        console.log("Switching to mock repository...");
+        UserRepository.instance = new MockUserRepository();
+    }
+    
+    static switchToAPI(): void {
+        console.log("Switching to API repository...");
+        UserRepository.instance = new APIUserRepository();
     }
 }
 
