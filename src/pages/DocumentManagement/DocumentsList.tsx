@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import { 
   Table, 
   TableHeader, 
@@ -10,6 +10,7 @@ import {
 import Badge from "../../components/ui/badge/Badge";
 import Button from "../../components/ui/button/Button";
 import FilterDropdown from "../../components/ui/dropdown/filterDropdown";
+import api from "../../utils/axios"; // top of file
 
 interface Document {
   id: number;
@@ -36,7 +37,7 @@ export default function DocList() {
   });
   
   // Configuration flag to toggle between mock data and real API
-  const USE_MOCK_DATA = true;
+  const USE_MOCK_DATA = false;
   
   // Mock data for documents
   const dummyDocuments: Document[] = [
@@ -145,27 +146,17 @@ export default function DocList() {
           
           setDocuments(filteredDocs);
         } else {
-          // Build query parameters from filters
-          const params = new URLSearchParams();
-          if (filters.category) params.append("categoryId", filters.category);
-          if (filters.department) params.append("departmentId", filters.department);
-          if (filters.startDate) params.append("startDate", filters.startDate);
-          if (filters.endDate) params.append("endDate", filters.endDate);
-          
-          const url = `/api/documents${params.toString() ? `?${params.toString()}` : ""}`;
-          
-          const response = await fetch(url, {
-            headers: {
-              // Add authorization header if needed
-            },
+          const response = await api.post("/documents/search", {
+            title: "", // You can extend this to support title search
+            categoryId: filters.category ? parseInt(filters.category) : null,
+            departmentId: filters.department ? parseInt(filters.department) : null,
+            startDate: filters.startDate || null,
+            endDate: filters.endDate || null,
           });
+
           
-          if (!response.ok) {
-            throw new Error("Failed to fetch documents");
-          }
-          
-          const data = await response.json();
-          setDocuments(data);
+          setDocuments(response.data);
+
         }
       } catch (err) {
         console.error("Error fetching documents:", err);
@@ -180,60 +171,28 @@ export default function DocList() {
   
   const handleDownload = async (fileUrl: string, fileName: string) => {
     try {
-      if (USE_MOCK_DATA) {
-        // Simulate download for mock data
-        alert(`Downloading file: ${fileName}`);
-        return;
-      }
-      
-      // Extract the file name from URL if needed
-      const nameFromUrl = fileUrl.split("/").pop() || fileName;
-      
-      const response = await fetch(`/api/storage/download/${nameFromUrl}`, {
-        headers: {
-          // Add authorization header if needed
-        },
+      const fileNameOnly = fileUrl.split("/").pop();
+  
+      const response = await api.get(`/files/download/${fileNameOnly}`, {
+        responseType: "blob",
       });
-      
-      if (!response.ok) {
-        throw new Error("Failed to download file");
-      }
-      
-      // Create a blob from the response
-      const blob = await response.blob();
-      
-      // Create a temporary URL for the blob
+  
+      const blob = new Blob([response.data]);
       const downloadUrl = window.URL.createObjectURL(blob);
-      
-      // Create a temporary anchor element and trigger the download
-      const a = document.createElement("a");
-      a.href = downloadUrl;
-      a.download = fileName || nameFromUrl;
-      document.body.appendChild(a);
-      a.click();
-      
-      // Clean up
+  
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = fileName || fileNameOnly!;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
-      document.body.removeChild(a);
     } catch (err) {
       console.error("Error downloading file:", err);
-      alert("Failed to download file. Please try again.");
+      alert("Download failed.");
     }
   };
   
-  const handleFilterChange = (name: string, value: string) => {
-    setFilters((prev) => ({ ...prev, [name]: value }));
-  };
-  
-  const clearFilters = () => {
-    setFilters({
-      category: "",
-      department: "",
-      startDate: "",
-      endDate: "",
-    });
-  };
-
   // Let's redesign the table completely to match the screenshot
 
   return (

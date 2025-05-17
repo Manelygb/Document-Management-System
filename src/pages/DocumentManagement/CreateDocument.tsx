@@ -7,9 +7,10 @@ import Input from "../../components/form/input/InputField";
 import Button from "../../components/ui/button/Button";
 import FileInput from "../../components/form/input/FileInput";
 import Select from "../../components/form/Select";
+import api from "../../utils/axios"; // Make sure this is imported
 
 // Configuration flag to toggle between mock data and real API
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 // Custom notification function instead of toast
 const notify = (message: string, type: 'success' | 'error') => {
@@ -112,8 +113,33 @@ export default function CreateDocument() {
       }
     };
     
-    fetchCategories();
-    fetchDepartments();
+    useEffect(() => {
+      const fetchData = async () => {
+        try {
+          if (USE_MOCK_DATA) {
+            await new Promise(resolve => setTimeout(resolve, 600));
+            setCategories(dummyCategories);
+            await new Promise(resolve => setTimeout(resolve, 800));
+            setDepartments(dummyDepartments);
+          } else {
+            const [categoriesResponse, departmentsResponse] = await Promise.all([
+              api.get("/admin/categories"),
+              api.get("/admin/departments")
+            ]);
+            setCategories(categoriesResponse.data);
+            setDepartments(departmentsResponse.data);
+          }
+        } catch (err) {
+          console.error("Error fetching dropdowns:", err);
+          notify("Failed to load categories or departments", "error");
+        }
+      };
+    
+      fetchData();
+    }, []);
+    
+    
+
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,11 +157,12 @@ export default function CreateDocument() {
     }
   };
 
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    
+
     if (!file) {
       setError("Please select a file to upload");
       setLoading(false);
@@ -143,57 +170,32 @@ export default function CreateDocument() {
     }
 
     try {
-      if (USE_MOCK_DATA) {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Log what would be sent to the server
-        console.log("Creating document with data:", {
-          ...formData,
-          file: file.name,
-          fileSize: file.size
-        });
-      } else {
-        // First, upload the file
-        const formDataFile = new FormData();
-        formDataFile.append("file", file);
-        
-        const uploadResponse = await fetch("/api/storage/upload", {
-          method: "POST",
-          body: formDataFile,
-          // Add authorization header if needed
-        });
-        
-        if (!uploadResponse.ok) {
-          throw new Error("Failed to upload file");
-        }
-        
-        const uploadData = await uploadResponse.json();
-        const fileUrl = uploadData.url; // Assuming the API returns the file URL
-        
-        // Now create the document with the file URL
-        const documentResponse = await fetch("/api/documents", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            // Add authorization header if needed
-          },
-          body: JSON.stringify({
-            ...formData,
-            s3fileUrl: fileUrl,
-            // The API might expect categoryId and departmentId as numbers
-            categoryId: parseInt(formData.categoryId),
-            departmentId: parseInt(formData.departmentId),
-          }),
-        });
-        
-        if (!documentResponse.ok) {
-          throw new Error("Failed to create document");
-        }
-      }
-      
+      // 1. Upload file to MinIO
+      const formDataFile = new FormData();
+      formDataFile.append("file", file);
+
+      const uploadResponse = await api.post("/files/upload", formDataFile, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const uploadedFileName = uploadResponse.data.filename;
+      if (!uploadedFileName) throw new Error("No filename returned");
+
+      // 2. Create document
+      const docPayload = {
+        title: formData.title,
+        translatedTitle: formData.translatedTitle || null,
+        s3FileUrl: uploadedFileName,
+        categoryId: parseInt(formData.categoryId),
+        departmentId: parseInt(formData.departmentId),
+      };
+
+      await api.post("/documents", docPayload);
+
       notify("Document created successfully", "success");
-      navigate("/doc-dashboard"); // Redirect to document dashboard
+      navigate("/doc-dashboard");
     } catch (err) {
       console.error("Error creating document:", err);
       setError("Failed to create document. Please try again.");
