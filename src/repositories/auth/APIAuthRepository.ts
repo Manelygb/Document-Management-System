@@ -23,6 +23,11 @@ class APIAuthRepository implements IAuthRepository {
             if (response.ok) {
                 this.authToken = data.token;
                 this.user = { email };
+    
+
+                // Save token and user info in localStorage
+                localStorage.setItem('authToken', data.token);
+                localStorage.setItem('userEmail', email);
                
                 debugLog("APIAuth", {
                     message: 'Login successful',
