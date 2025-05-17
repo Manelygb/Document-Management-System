@@ -8,7 +8,11 @@ import Button from "../../components/ui/button/Button";
 import MultiSelect from "../../components/form/MultiSelect";
 
 // Configuration flag to toggle between mock data and real API
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false; // Set to false to use real API
+
+// API configuration
+const API_BASE_URL = 'http://localhost:8080';
+let authToken = ''; // This would typically be managed with context/redux in a real app
 
 // Custom notification function instead of toast
 const notify = (message: string, type: 'success' | 'error') => {
@@ -32,13 +36,18 @@ const dummyDepartments: Department[] = [
   { id: 6, name: "Research & Development" }
 ];
 
+
 export default function CreateUser() {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     password: "",
+    username: "", // Added username field
+    fullName: "", // Added fullName field for concatenation
     role: "USER", // Default role
+    department: "", // Changed to array for selected departments
+    companyId: 1 // Default company ID
   });
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -48,6 +57,12 @@ export default function CreateUser() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Get auth token from localStorage or sessionStorage if available
+    const storedToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    if (storedToken) {
+      authToken = storedToken;
+    }
+    
     const fetchDepartments = async () => {
       try {
         if (USE_MOCK_DATA) {
@@ -55,18 +70,18 @@ export default function CreateUser() {
           await new Promise(resolve => setTimeout(resolve, 800));
           setDepartments(dummyDepartments);
         } else {
-          const response = await fetch("/api/departments", {
-            headers: {
-              // Add authorization header if needed
-            },
-          });
+          // const response = await fetch(`${API_BASE_URL}/departments`, {
+          //   headers: {
+          //     'Authorization': `Bearer ${authToken}`
+          //   },
+          // });
 
-          if (!response.ok) {
-            throw new Error("Failed to fetch departments");
-          }
+          // if (!response.ok) {
+          //   throw new Error("Failed to fetch departments");
+          // }
 
-          const data = await response.json();
-          setDepartments(data);
+          // const data = await response.json();
+          setDepartments(dummyDepartments);
         }
       } catch (err) {
         console.error("Error fetching departments:", err);
@@ -79,6 +94,25 @@ export default function CreateUser() {
     fetchDepartments();
   }, []);
 
+  // Generate username when first or last name changes
+  useEffect(() => {
+    if (formData.firstName && formData.lastName) {
+      // Concatenate full name
+      const fullName = `${formData.firstName} ${formData.lastName}`;
+      
+      // Generate username by lowercasing full name and adding two random numbers
+      const baseUsername = fullName.toLowerCase().replace(/\s+/g, '');
+      const randomNumbers = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+      const username = `${baseUsername}${randomNumbers}`;
+      
+      setFormData(prev => ({
+        ...prev,
+        username,
+        fullName
+      }));
+    }
+  }, [formData.firstName, formData.lastName]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -90,6 +124,23 @@ export default function CreateUser() {
     setError("");
 
     try {
+      // Check for authentication token
+      if (!authToken) {
+        setError('Authentication required. Please login first.');
+        notify('Authentication required. Please login first.', 'error');
+        return;
+      }
+      
+      const userData = {
+        username: formData.username,
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+        department: formData.department.join(","),
+        companyId: formData.companyId
+      };
+      
       if (USE_MOCK_DATA) {
         // Simulate API call with delay
         await new Promise(resolve => setTimeout(resolve, 1200));
@@ -98,46 +149,32 @@ export default function CreateUser() {
         const mockUserId = Math.floor(Math.random() * 1000);
         
         // Log the data that would be sent to the server
-        console.log("Creating user with data:", formData);
-        console.log("Assigning to departments:", selectedDepartments);
+        console.log("Creating user with data:", userData);
       } else {
-        // First, create the user
-        const userResponse = await fetch("/api/users", {
-          method: "POST",
+        // Use the actual API endpoint to create user
+        const response = await fetch(`${API_BASE_URL}/auth/users/create`, {
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
-            // Add authorization header if needed
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(userData)
         });
-
-        if (!userResponse.ok) {
-          throw new Error("Failed to create user");
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to create user');
         }
-
-        const userData = await userResponse.json();
-        const userId = userData.id;
-
-        // Next, assign the user to selected departments
-        if (selectedDepartments.length > 0) {
-          const assignPromises = selectedDepartments.map((departmentId) => 
-            fetch(`/api/departments/${departmentId}/users/${userId}`, {
-              method: "POST",
-              headers: {
-                // Add authorization header if needed
-              },
-            })
-          );
-
-          await Promise.all(assignPromises);
-        }
+        
+        console.log("User created successfully:", data);
       }
 
       notify("User created successfully", "success");
       navigate("/users-dashboard"); // Redirect to users list
     } catch (err) {
       console.error("Error creating user:", err);
-      setError("Failed to create user. Please try again.");
+      setError(err instanceof Error ? err.message : "Failed to create user. Please try again.");
       notify("Failed to create user", "error");
     } finally {
       setLoading(false);
@@ -149,6 +186,16 @@ export default function CreateUser() {
     value: dept.id.toString(),
     text: dept.name,
   }));
+  
+  // Handle department selection
+  const handleDepartmentChange = (selectedValues: string[]) => {
+    setSelectedDepartments(selectedValues);
+    // Also update the department field in formData
+    setFormData(prev => ({
+      ...prev,
+      department: selectedValues
+    }));
+  };
 
   return (
     <>
@@ -191,6 +238,21 @@ export default function CreateUser() {
             </div>
 
             <div className="mt-5">
+              <Label htmlFor="username">
+                Username <span className="text-gray-500">(auto-generated)</span>
+              </Label>
+              <Input
+                type="text"
+                id="username"
+                name="username"
+                value={formData.username}
+                readOnly
+                disabled
+                className="bg-gray-100 dark:bg-gray-800"
+              />
+            </div>
+
+            <div className="mt-5">
               <Label htmlFor="email">
                 Email <span className="text-error-500">*</span>
               </Label>
@@ -227,8 +289,9 @@ export default function CreateUser() {
                 <MultiSelect
                   label="Assign to Departments"
                   options={departmentOptions}
-                  onChange={setSelectedDepartments}
+                  onChange={handleDepartmentChange}
                   defaultSelected={[]}
+                  closeMenuOnSelect={true}
                 />
               )}
             </div>
