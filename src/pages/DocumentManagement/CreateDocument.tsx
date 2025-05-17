@@ -7,7 +7,7 @@ import Input from "../../components/form/input/InputField";
 import Button from "../../components/ui/button/Button";
 import FileInput from "../../components/form/input/FileInput";
 import Select from "../../components/form/Select";
-import api from "../../utils/axios"; // Make sure this is imported
+import api from "../../utils/axios";
 
 // Configuration flag to toggle between mock data and real API
 const USE_MOCK_DATA = false;
@@ -60,86 +60,31 @@ export default function CreateDocument() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  // Single useEffect for fetching both categories and departments
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
       try {
         if (USE_MOCK_DATA) {
           // Simulate network delay
           await new Promise(resolve => setTimeout(resolve, 600));
           setCategories(dummyCategories);
-        } else {
-          const response = await fetch("/api/documents/categories", {
-            headers: {
-              // Add authorization header if needed
-            },
-          });
-          
-          if (!response.ok) {
-            throw new Error("Failed to fetch categories");
-          }
-          
-          const data = await response.json();
-          setCategories(data);
-        }
-      } catch (err) {
-        console.error("Error fetching categories:", err);
-        notify("Failed to load document categories", "error");
-      }
-    };
-    
-    const fetchDepartments = async () => {
-      try {
-        if (USE_MOCK_DATA) {
-          // Simulate network delay
           await new Promise(resolve => setTimeout(resolve, 800));
           setDepartments(dummyDepartments);
         } else {
-          const response = await fetch("/api/departments", {
-            headers: {
-              // Add authorization header if needed
-            },
-          });
-          
-          if (!response.ok) {
-            throw new Error("Failed to fetch departments");
-          }
-          
-          const data = await response.json();
-          setDepartments(data);
+          const [categoriesResponse, departmentsResponse] = await Promise.all([
+            api.get("/admin/categories"),
+            api.get("/admin/departments")
+          ]);
+          setCategories(categoriesResponse.data);
+          setDepartments(departmentsResponse.data);
         }
       } catch (err) {
-        console.error("Error fetching departments:", err);
-        notify("Failed to load departments", "error");
+        console.error("Error fetching dropdowns:", err);
+        notify("Failed to load categories or departments", "error");
       }
     };
-    
-    useEffect(() => {
-      const fetchData = async () => {
-        try {
-          if (USE_MOCK_DATA) {
-            await new Promise(resolve => setTimeout(resolve, 600));
-            setCategories(dummyCategories);
-            await new Promise(resolve => setTimeout(resolve, 800));
-            setDepartments(dummyDepartments);
-          } else {
-            const [categoriesResponse, departmentsResponse] = await Promise.all([
-              api.get("/admin/categories"),
-              api.get("/admin/departments")
-            ]);
-            setCategories(categoriesResponse.data);
-            setDepartments(departmentsResponse.data);
-          }
-        } catch (err) {
-          console.error("Error fetching dropdowns:", err);
-          notify("Failed to load categories or departments", "error");
-        }
-      };
-    
-      fetchData();
-    }, []);
-    
-    
-
+  
+    fetchData();
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,34 +101,49 @@ export default function CreateDocument() {
       setFile(e.target.files[0]);
     }
   };
-
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-
+  
     if (!file) {
       setError("Please select a file to upload");
       setLoading(false);
       return;
     }
-
+  
     try {
-      // 1. Upload file to MinIO
+      // 1. Upload file to MinIO - Add more detailed logging
+      console.log("Preparing to upload file:", file.name, file.type, file.size);
+      
       const formDataFile = new FormData();
       formDataFile.append("file", file);
-
+      
+      // Log the FormData (though it won't show content directly)
+      console.log("FormData prepared with file");
+      
+      console.log("Sending upload request to server...");
       const uploadResponse = await api.post("/files/upload", formDataFile, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
+        // Add timeout and error handling options
+        timeout: 30000, // 30 seconds
       });
-
+      
+      console.log("Upload response received:", uploadResponse.data);
+      
       const uploadedFileName = uploadResponse.data.filename;
-      if (!uploadedFileName) throw new Error("No filename returned");
-
+      const uploadedFileUrl = uploadResponse.data.url;
+      
+      if (!uploadedFileName) {
+        console.error("No filename in response:", uploadResponse.data);
+        throw new Error("No filename returned");
+      }
+  
       // 2. Create document
+      console.log("Preparing document payload with file:", uploadedFileName);
       const docPayload = {
         title: formData.title,
         translatedTitle: formData.translatedTitle || null,
@@ -191,14 +151,40 @@ export default function CreateDocument() {
         categoryId: parseInt(formData.categoryId),
         departmentId: parseInt(formData.departmentId),
       };
-
+      
+      console.log("Submitting document payload:", docPayload);
       await api.post("/documents", docPayload);
-
+  
+      console.log("Document created successfully");
       notify("Document created successfully", "success");
       navigate("/doc-dashboard");
     } catch (err) {
       console.error("Error creating document:", err);
-      setError("Failed to create document. Please try again.");
+      
+      // More detailed error logging
+      if (err.response) {
+        // The server responded with a status code outside the 2xx range
+        console.error("Server error details:", {
+          status: err.response.status,
+          statusText: err.response.statusText,
+          data: err.response.data
+        });
+        
+        setError(`Server Error (${err.response.status}): ${
+          err.response.data && err.response.data.error 
+            ? err.response.data.error 
+            : 'Internal server error'
+        }`);
+      } else if (err.request) {
+        // The request was made but no response received
+        console.error("No response from server:", err.request);
+        setError("No response from server. Please check your connection.");
+      } else {
+        // Something happened in setting up the request
+        console.error("Request setup error:", err.message);
+        setError(`Error: ${err.message}`);
+      }
+      
       notify("Failed to create document", "error");
     } finally {
       setLoading(false);
