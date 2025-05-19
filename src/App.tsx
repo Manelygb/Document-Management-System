@@ -31,6 +31,8 @@ import CreateDocument from "./pages/DocumentManagement/CreateDocument";
 // Import department management components
 import DepartmentDashboard from './pages/DepartmentManagement/DepartmentDashboard';
 import DepartmentUsers from './pages/DepartmentManagement/DepartmentUsers';
+import EditDepartment from "./pages/DepartmentManagement/EditDepartment";
+import AddUserToDepartment from "./pages/DepartmentManagement/AddUserToDepartment";
 
 function HistorySetter() {
   history.navigate = useNavigate();
@@ -85,6 +87,9 @@ export default function App() {
             <Route path="/departments" element={<DepartmentDashboard />} />
             <Route path="/departments/create" element={<CreateDepartment />} />
             <Route path="/departments/:departmentId/users" element={<DepartmentUsers />} />
+            <Route path="/departments/edit/:departmentId" element={<EditDepartment />} />
+            <Route path="/departments/:departmentId/add-user" element={<AddUserToDepartment />} />
+
           </Route>
 
           {/* Auth Layout */}

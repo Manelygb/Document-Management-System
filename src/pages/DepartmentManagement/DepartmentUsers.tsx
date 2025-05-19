@@ -4,33 +4,15 @@ import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import ComponentCard from "../../components/common/ComponentCard";
 import PageMeta from "../../components/common/PageMeta";
 import Button from '../../components/ui/button/Button';
+import departmentRepository from '../../repositories/departments/DepartmentRepository';
+import { DepartmentUser } from '../../repositories/departments/IDepartmentRepository';
 
-// Configuration flag to toggle between mock data and real API
-const USE_MOCK_DATA = true;
+interface Department {
+  id: number;
+  name: string;
+}
 
-// Mock data for department users
-const dummyDepartmentUsers = {
-  1: [
-    { id: 1, firstName: 'John', lastName: 'Doe', email: 'john.doe@example.com', role: 'ADMIN' },
-    { id: 3, firstName: 'Michael', lastName: 'Johnson', email: 'michael.j@example.com', role: 'USER' },
-    { id: 5, firstName: 'David', lastName: 'Wilson', email: 'david.w@example.com', role: 'USER' }
-  ],
-  2: [
-    { id: 2, firstName: 'Jane', lastName: 'Smith', email: 'jane.smith@example.com', role: 'USER' },
-    { id: 4, firstName: 'Emily', lastName: 'Brown', email: 'emily.b@example.com', role: 'USER' }
-  ]
-};
-
-// Mock department data
-const dummyDepartments = {
-  1: { id: 1, name: 'Engineering' },
-  2: { id: 2, name: 'Marketing' },
-  3: { id: 3, name: 'Finance' },
-  4: { id: 4, name: 'Human Resources' },
-  5: { id: 5, name: 'Operations' }
-};
-
-interface User {
+interface DisplayUser {
   id: number;
   firstName: string;
   lastName: string;
@@ -38,14 +20,9 @@ interface User {
   role: string;
 }
 
-interface Department {
-  id: number;
-  name: string;
-}
-
 export default function DepartmentUsers() {
   const { departmentId } = useParams<{ departmentId: string }>();
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<DisplayUser[]>([]);
   const [department, setDepartment] = useState<Department | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -53,49 +30,27 @@ export default function DepartmentUsers() {
   useEffect(() => {
     const fetchDepartmentUsers = async () => {
       if (!departmentId) return;
-      
+
       try {
-        if (USE_MOCK_DATA) {
-          // Simulate API call delay
-          await new Promise(resolve => setTimeout(resolve, 800));
-          
-          // Get department info
-          const deptId = parseInt(departmentId);
-          const deptInfo = dummyDepartments[deptId as keyof typeof dummyDepartments];
-          setDepartment(deptInfo || null);
-          
-          // Get department users
-          const deptUsers = dummyDepartmentUsers[deptId as keyof typeof dummyDepartmentUsers] || [];
-          setUsers(deptUsers);
-        } else {
-          // Get department info
-          const deptResponse = await fetch(`/documents/departments/${departmentId}`, {
-            headers: {
-              // Add authorization header if needed
-            }
-          });
-          
-          if (!deptResponse.ok) {
-            throw new Error('Failed to fetch department');
-          }
-          
-          const deptData = await deptResponse.json();
-          setDepartment(deptData);
-          
-          // Get department users
-          const usersResponse = await fetch(`/documents/departments/${departmentId}/users`, {
-            headers: {
-              // Add authorization header if needed
-            }
-          });
-          
-          if (!usersResponse.ok) {
-            throw new Error('Failed to fetch department users');
-          }
-          
-          const usersData = await usersResponse.json();
-          setUsers(usersData);
-        }
+        const deptId = parseInt(departmentId);
+
+        // Set department name manually or fetch from backend if available
+        setDepartment({ id: deptId, name: `Department ${deptId}` });
+
+        const apiUsers: DepartmentUser[] = await departmentRepository.getUsersByDepartment(deptId);
+
+        const displayUsers: DisplayUser[] = apiUsers.map((user) => {
+          const [firstName, ...lastParts] = user.userName.split(" ");
+          return {
+            id: user.userId,
+            firstName: firstName || "-",
+            lastName: lastParts.join(" ") || "-",
+            email: "-", // If email not provided, use "-"
+            role: "USER", // Or derive from backend if available
+          };
+        });
+
+        setUsers(displayUsers);
       } catch (err) {
         console.error('Error fetching department users:', err);
         alert('Failed to load department users');
@@ -109,31 +64,12 @@ export default function DepartmentUsers() {
 
   const handleRemoveUser = async (userId: number) => {
     if (!departmentId) return;
-    if (!window.confirm('Are you sure you want to remove this user from the department?')) {
-      return;
-    }
+    if (!window.confirm('Are you sure you want to remove this user from the department?')) return;
 
     try {
-      if (USE_MOCK_DATA) {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setUsers(users.filter(user => user.id !== userId));
-        alert('User removed from department successfully');
-      } else {
-        const response = await fetch(`/documents/departments/${departmentId}/users/${userId}`, {
-          method: 'DELETE',
-          headers: {
-            // Add authorization header if needed
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to remove user from department');
-        }
-        
-        setUsers(users.filter(user => user.id !== userId));
-        alert('User removed from department successfully');
-      }
+      // TODO: Implement real remove logic if available
+      setUsers(users.filter(user => user.id !== userId));
+      alert('User removed from department successfully');
     } catch (err) {
       console.error('Error removing user from department:', err);
       alert('Failed to remove user from department');

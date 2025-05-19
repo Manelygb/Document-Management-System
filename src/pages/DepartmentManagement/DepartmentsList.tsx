@@ -1,24 +1,10 @@
+// src/pages/DepartmentManagement/DepartmentsList.tsx
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/ui/button/Button';
-
-// Configuration flag to toggle between mock data and real API
-const USE_MOCK_DATA = true;
-
-// Mock data for departments
-const dummyDepartments = [
-  { id: 1, name: 'Engineering', userCount: 12 },
-  { id: 2, name: 'Marketing', userCount: 8 },
-  { id: 3, name: 'Finance', userCount: 5 },
-  { id: 4, name: 'Human Resources', userCount: 7 },
-  { id: 5, name: 'Operations', userCount: 10 }
-];
-
-interface Department {
-  id: number;
-  name: string;
-  userCount?: number;
-}
+import departmentRepository from '../../repositories/departments/DepartmentRepository';
+import { Department } from '../../repositories/departments/IDepartmentRepository';
 
 export default function DepartmentsList() {
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -28,24 +14,8 @@ export default function DepartmentsList() {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        if (USE_MOCK_DATA) {
-          // Simulate API call delay
-          await new Promise(resolve => setTimeout(resolve, 800));
-          setDepartments(dummyDepartments);
-        } else {
-          const response = await fetch('/documents/departments', {
-            headers: {
-              // Add authorization header if needed
-            }
-          });
-          
-          if (!response.ok) {
-            throw new Error('Failed to fetch departments');
-          }
-          
-          const data = await response.json();
-          setDepartments(data);
-        }
+        const data = await departmentRepository.fetchDepartments();
+        setDepartments(data);
       } catch (err) {
         console.error('Error fetching departments:', err);
         alert('Failed to load departments');
@@ -62,31 +32,12 @@ export default function DepartmentsList() {
   };
 
   const handleDelete = async (departmentId: number) => {
-    if (!window.confirm('Are you sure you want to delete this department?')) {
-      return;
-    }
+    if (!window.confirm('Are you sure you want to delete this department?')) return;
 
     try {
-      if (USE_MOCK_DATA) {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setDepartments(departments.filter(dept => dept.id !== departmentId));
-        alert('Department deleted successfully');
-      } else {
-        const response = await fetch(`/documents/departments/${departmentId}`, {
-          method: 'DELETE',
-          headers: {
-            // Add authorization header if needed
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to delete department');
-        }
-        
-        setDepartments(departments.filter(dept => dept.id !== departmentId));
-        alert('Department deleted successfully');
-      }
+      await departmentRepository.deleteDepartment(departmentId);
+      setDepartments(prev => prev.filter(dept => dept.id !== departmentId));
+      alert('Department deleted successfully');
     } catch (err) {
       console.error('Error deleting department:', err);
       alert('Failed to delete department');

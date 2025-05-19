@@ -6,6 +6,7 @@ import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
 import Button from "../../components/ui/button/Button";
 import MultiSelect from "../../components/form/MultiSelect";
+import departmentRepository from "../../repositories/departments/DepartmentRepository";
 
 // Configuration flag to toggle between mock data and real API
 const USE_MOCK_DATA = false; // Set to false to use real API
@@ -70,18 +71,9 @@ export default function CreateUser() {
           await new Promise(resolve => setTimeout(resolve, 800));
           setDepartments(dummyDepartments);
         } else {
-          // const response = await fetch(`${API_BASE_URL}/departments`, {
-          //   headers: {
-          //     'Authorization': `Bearer ${authToken}`
-          //   },
-          // });
+          const data = await departmentRepository.fetchDepartments();
+          setDepartments(data);
 
-          // if (!response.ok) {
-          //   throw new Error("Failed to fetch departments");
-          // }
-
-          // const data = await response.json();
-          setDepartments(dummyDepartments);
         }
       } catch (err) {
         console.error("Error fetching departments:", err);

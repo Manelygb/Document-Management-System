@@ -8,6 +8,8 @@ import Button from "../../components/ui/button/Button";
 import FileInput from "../../components/form/input/FileInput";
 import Select from "../../components/form/Select";
 import api from "../../utils/axios";
+import documentRepository from "../../repositories/documents/DocumentRepository";
+import departmentRepository from "../../repositories/departments/DepartmentRepository";
 
 // Configuration flag to toggle between mock data and real API
 const USE_MOCK_DATA = false;
@@ -71,12 +73,13 @@ export default function CreateDocument() {
           await new Promise(resolve => setTimeout(resolve, 800));
           setDepartments(dummyDepartments);
         } else {
-          const [categoriesResponse, departmentsResponse] = await Promise.all([
-            api.get("/admin/categories"),
-            api.get("/admin/departments")
+          const [fetchedCategories, fetchedDepartments] = await Promise.all([
+            documentRepository.fetchCategories(),
+            departmentRepository.fetchDepartments()
           ]);
-          setCategories(categoriesResponse.data);
-          setDepartments(departmentsResponse.data);
+          setCategories(fetchedCategories);
+          setDepartments(fetchedDepartments);
+
         }
       } catch (err) {
         console.error("Error fetching dropdowns:", err);

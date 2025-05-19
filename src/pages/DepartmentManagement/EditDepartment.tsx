@@ -1,7 +1,5 @@
-// src/pages/DepartmentManagement/CreateDepartment.tsx
-
-import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import Label from "../../components/form/Label";
@@ -9,15 +7,17 @@ import Input from "../../components/form/input/InputField";
 import Button from "../../components/ui/button/Button";
 import departmentRepository from "../../repositories/departments/DepartmentRepository";
 
-const notify = (message: string, type: "success" | "error") => {
-  alert(`${type === "success" ? "Success" : "Error"}: ${message}`);
-};
-
-export default function CreateDepartment() {
+export default function EditDepartment() {
+  const { departmentId } = useParams<{ departmentId: string }>();
   const [departmentName, setDepartmentName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // If your backend supports "get department by id", call it here
+    // For now, assume prefilled value is manually passed or skipped
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,13 +25,12 @@ export default function CreateDepartment() {
     setError("");
 
     try {
-      await departmentRepository.createDepartment(departmentName);
-      notify("Department created successfully", "success");
+      await departmentRepository.updateDepartment(Number(departmentId), departmentName);
+      alert("Department updated successfully");
       navigate("/departments");
-    } catch (err: any) {
-      console.error("Error creating department:", err);
-      setError("Failed to create department. Please try again.");
-      notify("Failed to create department", "error");
+    } catch (err) {
+      console.error("Error updating department:", err);
+      setError("Failed to update department. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -39,20 +38,18 @@ export default function CreateDepartment() {
 
   return (
     <>
-      <PageMeta title="Create Department" description="Create a new department" />
+      <PageMeta title="Edit Department" description="Edit department details" />
       <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
-        <PageBreadcrumb pageTitle="Create Department" />
+        <PageBreadcrumb pageTitle="Edit Department" />
 
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-card dark:border-gray-800 dark:bg-gray-900">
           <form onSubmit={handleSubmit}>
             <div className="mb-5">
-              <Label htmlFor="departmentName">
-                Department Name <span className="text-error-500">*</span>
-              </Label>
+              <Label htmlFor="departmentName">Department Name</Label>
               <Input
                 type="text"
                 id="departmentName"
-                placeholder="Enter department name"
+                placeholder="Enter new department name"
                 value={departmentName}
                 onChange={(e) => setDepartmentName(e.target.value)}
                 required
@@ -65,19 +62,18 @@ export default function CreateDepartment() {
               </div>
             )}
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex gap-3">
               <Button
                 type="submit"
                 disabled={loading || !departmentName.trim()}
-                className="inline-flex h-11 items-center justify-center rounded-lg border border-transparent bg-brand-500 px-5 py-3 font-medium text-white shadow-theme-xs hover:bg-brand-600"
+                className="bg-brand-500 text-white hover:bg-brand-600"
               >
-                {loading ? "Creating..." : "Create Department"}
+                {loading ? "Updating..." : "Update Department"}
               </Button>
               <Button
                 type="button"
                 onClick={() => navigate(-1)}
                 variant="outline"
-                className="inline-flex h-11 items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-3 font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
               >
                 Cancel
               </Button>

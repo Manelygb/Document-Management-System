@@ -1,3 +1,5 @@
+// src/pages/DocumentManagement/CreateCategory.tsx
+
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
@@ -5,15 +7,10 @@ import PageMeta from "../../components/common/PageMeta";
 import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
 import Button from "../../components/ui/button/Button";
+import documentRepository from "../../repositories/documents/DocumentRepository";
 
-// Configuration flag to toggle between mock data and real API
-const USE_MOCK_DATA = true;
-
-// Custom notification function instead of toast
-const notify = (message: string, type: 'success' | 'error') => {
-  console.log(`[${type.toUpperCase()}] ${message}`);
-  // In a real app, you would show a toast notification here
-  alert(`${type === 'success' ? 'Success' : 'Error'}: ${message}`);
+const notify = (message: string, type: "success" | "error") => {
+  alert(`${type === "success" ? "Success" : "Error"}: ${message}`);
 };
 
 export default function CreateCategory() {
@@ -28,30 +25,10 @@ export default function CreateCategory() {
     setError("");
 
     try {
-      if (USE_MOCK_DATA) {
-        // Simulate API call with delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Log the data that would be sent to the server
-        console.log("Creating category with name:", categoryName);
-      } else {
-        // API call to create category
-        const response = await fetch("/api/documents/categories", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            // Add authorization header if needed
-          },
-          body: JSON.stringify({ name: categoryName }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to create category");
-        }
-      }
+      await documentRepository.createCategory(categoryName);
 
       notify("Document category created successfully", "success");
-      navigate("/doc-dashboard"); // Redirect to document dashboard
+      navigate("/doc-dashboard");
     } catch (err) {
       console.error("Error creating category:", err);
       setError("Failed to create category. Please try again.");
