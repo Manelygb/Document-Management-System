@@ -1,26 +1,35 @@
 import IAuthRepository, { LoginPayload, User } from "./IAuthRepository";
 import { debugLog } from "./utils";
+import API from "../../utils/axios";
+
+export const login = async ({ email, password }) => {
+    return await API.post("/auth/login", { email, password });
+  };
 
 class APIAuthRepository implements IAuthRepository {
     private user: User | null = null;
     private authToken: string | null = null;
     private API_BASE_URL: string = "http://localhost:8080"; // Default API URL
+    private static instance: APIAuthRepository;
+
+    private constructor() {}
+
+    static getInstance(): APIAuthRepository {
+      if (!APIAuthRepository.instance) {
+        APIAuthRepository.instance = new APIAuthRepository();
+      }
+      return APIAuthRepository.instance;
+    }
 
     async login({ email, password }: LoginPayload): Promise<{ success: boolean; user?: User; message?: string; token?: string }> {
         try {
             debugLog("APIAuth", `Attempting login to ${this.API_BASE_URL}/auth/login`);
             
-            const response = await fetch(`${this.API_BASE_URL}/auth/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, password })
-            });
+            const response = await API.post("/auth/login", { email, password });
+            const data = response.data;
+
            
-            const data = await response.json();
-           
-            if (response.ok) {
+            if (response.status === 200 && data.token) {
                 this.authToken = data.token;
                 this.user = { email };
     

@@ -3,11 +3,11 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import "swiper/swiper-bundle.css";
 import "simplebar-react/dist/simplebar.min.css";
-import App from "./App.tsx";
-import { AppWrapper } from "./components/common/PageMeta.tsx";
-import { ThemeProvider } from "./context/ThemeContext.tsx";
+import App from "./App";
+import { AppWrapper } from "./components/common/PageMeta";
+import { ThemeProvider } from "./context/ThemeContext";
 import { Provider } from "react-redux"; 
-import store from "./store/store.ts"; 
+import store from "./store/store"; 
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
